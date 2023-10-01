@@ -1,20 +1,14 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-  Optional,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { TriggerMethod } from './enum/triggerMethod.enum';
 import axios from 'axios';
 import { CreateSchedulerDto } from './dto/createScheduler.dto';
-import { ClientKafka } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { error } from 'console';
 import { IDataServices } from 'src/core/abstracts/dataServices.abstract';
 import { Schedule } from 'src/core/entities/schedule.entity';
+import { TriggerMethodNotFound, TriggerService } from './trigger.service';
 
 @Injectable()
 export class SchedulerService implements OnApplicationBootstrap {
@@ -22,11 +16,9 @@ export class SchedulerService implements OnApplicationBootstrap {
 
   constructor(
     private schedulerRegistry: SchedulerRegistry,
-    @Optional() @Inject('KAFKA_SERVICE') private clientKafka: ClientKafka,
     private dataService: IDataServices,
-  ) {
-    // this.clientKafka.connect();
-  }
+    private triggerService: TriggerService,
+  ) {}
 
   async onApplicationBootstrap() {
     console.log('SchedulerService onApplicationBootstrap Start');
@@ -130,19 +122,7 @@ export class SchedulerService implements OnApplicationBootstrap {
     );
 
     try {
-      switch (schedule.triggerMethod) {
-        case TriggerMethod.REST:
-          await axios.post(schedule.webhookUrl, schedule?.data);
-          break;
-        case TriggerMethod.KAFKA:
-          await lastValueFrom(
-            this.clientKafka.emit(schedule.kafkaTopic, { ...schedule?.data }),
-          );
-          break;
-
-        default:
-          throw error('Unknow Trigger Method');
-      }
+      await this.triggerService.trigger(schedule);
 
       this.logger.log(`Job ${serviceJobName} completed successfully`);
 
@@ -162,7 +142,14 @@ export class SchedulerService implements OnApplicationBootstrap {
 
       schedule.isError = true;
 
-      if (schedule.isOnce && !schedule.retry) {
+      if (error instanceof TriggerMethodNotFound) {
+        this.logger.log(
+          `Job ${serviceJobName} will be disabled since trigger method not found`,
+        );
+        schedule.isActive = false;
+
+        this.unScheduleJob(serviceJobName);
+      } else if (schedule.isOnce && !schedule.retry) {
         this.logger.log(
           `Job ${serviceJobName} is a one time job with no retry`,
         );
