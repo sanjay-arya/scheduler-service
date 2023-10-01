@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { Schedule as ScheduleEntity } from 'src/core/entities/schedule.entity';
 
 export type ScheduleDocument = HydratedDocument<Schedule>;
 
@@ -12,7 +13,7 @@ export type ScheduleDocument = HydratedDocument<Schedule>;
   },
   timestamps: true,
 })
-export class Schedule {
+export class Schedule extends ScheduleEntity {
   @Prop({ required: true })
   serviceName: string;
 

@@ -2,25 +2,13 @@ import { Module } from '@nestjs/common';
 import { SchedulerService } from './scheduler.service';
 import { SchedulerController } from './scheduler.controller';
 import { ScheduleModule } from '@nestjs/schedule';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Schedule, ScheduleSchema } from './schemes/schedule.schema';
 import { ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { Partitioners } from 'kafkajs';
+import { MongoDataServiceModule } from 'src/frameworks/dataServices/mongoose/mongoDataService.module';
 
 @Module({
-  imports: [
-    ScheduleModule.forRoot(),
-    MongooseModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('mongodb.uri'),
-      }),
-      inject: [ConfigService],
-    }),
-    MongooseModule.forFeature([
-      { name: Schedule.name, schema: ScheduleSchema },
-    ]),
-  ],
+  imports: [ScheduleModule.forRoot(), MongoDataServiceModule],
   controllers: [SchedulerController],
   providers: [
     SchedulerService,

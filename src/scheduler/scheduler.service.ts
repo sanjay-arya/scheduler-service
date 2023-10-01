@@ -6,9 +6,6 @@ import {
   Optional,
 } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { InjectModel } from '@nestjs/mongoose';
-import { Schedule, ScheduleDocument } from './schemes/schedule.schema';
-import { Model } from 'mongoose';
 import { CronJob } from 'cron';
 import { TriggerMethod } from './enum/triggerMethod.enum';
 import axios from 'axios';
@@ -16,6 +13,8 @@ import { CreateSchedulerDto } from './dto/createScheduler.dto';
 import { ClientKafka } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { error } from 'console';
+import { IDataServices } from 'src/core/abstracts/dataServices.abstract';
+import { Schedule } from 'src/core/entities/schedule.entity';
 
 @Injectable()
 export class SchedulerService implements OnApplicationBootstrap {
@@ -23,8 +22,8 @@ export class SchedulerService implements OnApplicationBootstrap {
 
   constructor(
     private schedulerRegistry: SchedulerRegistry,
-    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>,
     @Optional() @Inject('KAFKA_SERVICE') private clientKafka: ClientKafka,
+    private dataService: IDataServices,
   ) {
     // this.clientKafka.connect();
   }
@@ -36,25 +35,20 @@ export class SchedulerService implements OnApplicationBootstrap {
   }
 
   async create(createSchedulerDto: CreateSchedulerDto) {
-    const job_id = await this.scheduleModel.exists({
+    let job: Schedule = await this.dataService.schedules.findOne({
       serviceName: createSchedulerDto.serviceName,
       jobName: createSchedulerDto.jobName,
       isActive: true,
     });
 
-    let job: ScheduleDocument;
-
-    if (job_id) {
-      job = await this.scheduleModel.findByIdAndUpdate(
-        job_id,
+    if (job) {
+      job = await this.dataService.schedules.findByIdAndUpdate(
+        job.id,
         createSchedulerDto,
-        { new: true },
       );
-      console.log(job);
       this.reScheduleJob(job);
     } else {
-      job = await this.scheduleModel.create(createSchedulerDto);
-      console.log(job);
+      job = await this.dataService.schedules.create(createSchedulerDto);
       this.scheduleJob(job);
     }
 
@@ -62,29 +56,30 @@ export class SchedulerService implements OnApplicationBootstrap {
   }
 
   async delete(serviceName: string, jobName: string) {
-    const job = await this.scheduleModel.findOne({
+    let job = await this.dataService.schedules.findOne({
       serviceName,
       jobName,
       isActive: true,
     });
 
     if (job) {
-      job.isActive = false;
-      await job.save();
+      job = await this.dataService.schedules.findByIdAndUpdate(job.id, {
+        isActive: false,
+      });
 
       await this.unScheduleJob(`${job.serviceName}-${job.jobName}`);
     }
   }
 
   async initScheduleJobs() {
-    const schedules = await this.scheduleModel.find({ isActive: true });
+    const schedules = await this.dataService.schedules.find({ isActive: true });
 
     for (const schedule of schedules) {
       await this.scheduleJob(schedule);
     }
   }
 
-  async scheduleJob(schedule: ScheduleDocument) {
+  async scheduleJob(schedule: Schedule) {
     const serviceJobName = `${schedule.serviceName}-${schedule.jobName}`;
 
     const job = new CronJob(schedule.cronTime, () => {
@@ -101,13 +96,11 @@ export class SchedulerService implements OnApplicationBootstrap {
     );
   }
 
-  async reScheduleJob(schedule: ScheduleDocument) {
+  async reScheduleJob(schedule: Schedule) {
     const serviceJobName = `${schedule.serviceName}-${schedule.jobName}`;
 
     this.logger.log(`Re-Scheduling Job ${serviceJobName}`);
 
-    // this.schedulerRegistry.deleteCronJob(serviceJobName);
-    // this.logger.log(`Job ${serviceJobName} is deleted!`);
     this.unScheduleJob(serviceJobName);
 
     await this.scheduleJob(schedule);
@@ -123,8 +116,8 @@ export class SchedulerService implements OnApplicationBootstrap {
     }
   }
 
-  async executeJob(id: string, serviceJobName: string) {
-    const schedule = await this.scheduleModel.findById(id);
+  async executeJob(id: number | string, serviceJobName: string) {
+    const schedule = await this.dataService.schedules.findById(id);
 
     if (!schedule) {
       this.logger.error(`Schedule not found for Job ${serviceJobName}`);
@@ -155,7 +148,10 @@ export class SchedulerService implements OnApplicationBootstrap {
 
       if (schedule.isOnce) {
         schedule.isActive = false;
-        await schedule.save();
+        await this.dataService.schedules.findByIdAndUpdate(
+          schedule.id,
+          schedule,
+        );
 
         this.logger.log(`Job ${serviceJobName} is a one time job.`);
         this.unScheduleJob(serviceJobName);
@@ -175,7 +171,7 @@ export class SchedulerService implements OnApplicationBootstrap {
         this.unScheduleJob(serviceJobName);
       }
 
-      await schedule.save();
+      await this.dataService.schedules.findByIdAndUpdate(schedule.id, schedule);
     }
   }
 }
