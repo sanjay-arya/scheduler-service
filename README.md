@@ -1,73 +1,317 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# NestJS Scheduler Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A scheduler service built with NestJS that allows you to create, update, and disable schedules with support for MySQL and MongoDB as the database backend.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Table of Contents
 
-## Description
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Endpoints](#endpoints)
+- [Job Trigger Methods](#job-trigger-methods)
+- [Dockerization](#dockerization)
+- [Helm Charts](#helm-charts)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Features
+
+- Create or update schedules.
+- Disable schedules.
+- Choose between MySQL and MongoDB as the database backend.
+- Execute jobs with REST and Kafka trigger methods.
+
+## Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+
+- Node.js and npm installed.
+- MySQL or MongoDB set up based on your choice.
 
 ## Installation
 
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/sanjay-arya/scheduler-service.git
+   ```
+
+2. Navigate to the project directory:
+
+   ```bash
+   cd scheduler-service
+   ```
+
+3. Install the dependencies:
+
+   ```bash
+   npm install
+   ```
+
+## Usage
+
+To start the NestJS scheduler service, use the following command:
+
 ```bash
-$ npm install
+npm run start
 ```
 
-## Running the app
+## Configuration
 
-```bash
-# development
-$ npm run start
+The service can be configured using environment variables in a `.env` file. Here are the available configurations:
 
-# watch mode
-$ npm run start:dev
+- `DATABASE_TYPE`: Set to `mysql` or `mongodb` based on your choice of database.
+- `KAFKA_BROKERS`: Specify Kafka brokers if you want to enable Kafka trigger method (optional).
 
-# production mode
-$ npm run start:prod
+## Configuration
+
+The service can be configured using the following environment variables. Create a `.env` file in the project directory and set these variables as needed:
+
+- `DATABASE_TYPE`: Set to `mysql` or `mongo` based on your choice of database.
+
+#### MySQL Configuration (if using MySQL)
+
+- `DATABASE_USER`: MySQL database user.
+- `DATABASE_PASS`: MySQL database password.
+- `DATABASE_HOST`: MySQL database host.
+- `DATABASE_NAME`: MySQL database name.
+- `DATABASE_PORT`: MySQL database port.
+
+#### MongoDB Configuration (if using MongoDB)
+
+- `MONGODB_URI`: MongoDB connection URI.
+
+#### Kafka Configuration (optional, if using Kafka)
+
+- `KAFKA_BROKERS`: Kafka broker(s) address.
+
+#### Service Configuration
+
+- `PORT`: Port on which the NestJS service will run (default is 3000).
+
+Example `.env` file:
+
+```plaintext
+DATABASE_TYPE=mysql
+
+DATABASE_USER=root
+DATABASE_PASS=root
+DATABASE_HOST=localhost
+DATABASE_NAME=scheduler
+DATABASE_PORT=3306
 ```
 
-## Test
+```plaintext
+DATABASE_TYPE=mongodb
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+MONGODB_URI='mongodb://localhost/scheduler'
 ```
 
-## Support
+```plaintext
+KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092
+PORT=3000
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Make sure to customize these variables according to your specific configuration. Users can create their own .env file based on this template to configure the service for their environment.
 
-## Stay in touch
+## Endpoints
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Create or Update Schedule
 
-## License
+**POST** `/api/schedule`
 
-Nest is [MIT licensed](LICENSE).
+To create or update schedules, you can make a **POST** request to `/api/schedule`. This endpoint allows you to define and configure schedules for your jobs.
+
+**Request Payload**:
+
+```json
+{
+  "serviceName": "Example Service",
+  "jobName": "Example Job",
+  "jobDescription": "Description of the job",
+  "cronTime": "* * * * * *", // Your cron expression
+  "triggerMethod": "REST" // or "KAFKA"
+  // Additional fields based on trigger method
+}
+```
+
+- `serviceName`: A string representing the name of the service associated with the job.
+- `jobName`: A string representing the name of the job.
+- `jobDescription`: A string describing the job.
+- `cronTime`: A string specifying the cron expression for when the job should run.
+- `triggerMethod`: A string indicating the trigger method for the job. It can be either `"REST"` or `"KAFKA"`.
+- `retry` (optional): A boolean indicating whether to keep retrying the job if something goes wrong during execution.
+- `isOnce` (optional): A boolean indicating if the job is a one-time job that will be disabled after a successful execution.
+- `data` (optional): Additional data that will be sent as the POST request body.
+
+**Note**: If there is an active job with the same `serviceName` and `jobName`, the existing job will be updated. If no active job is found with the provided `serviceName` and `jobName`, a new job will be created.
+
+Depending on the chosen `triggerMethod`, you may need to provide additional fields in the request payload:
+
+- If `triggerMethod` is `"REST"`, include:
+
+  - `webhookUrl`: A string specifying the URL to which a POST request will be made when triggering the job.
+
+- If `triggerMethod` is `"KAFKA"`, include:
+  - `kafkaTopic`: A string specifying the Kafka topic that triggers the job.
+
+Customize the payload based on your requirements and the chosen trigger method.
+
+#### REST Trigger Method
+
+```json
+{
+  "serviceName": "example-service",
+  "jobName": "example-job",
+  "jobDescription": "Description of the job",
+  "cronTime": "* * * * * *",
+  "triggerMethod": "REST",
+  "webhookUrl": "https://example.com/webhook",
+  "retry": true,
+  "isOnce": false,
+  "data": {
+    "key1": "value1",
+    "key2": "value2"
+  }
+}
+```
+
+#### Kafka Trigger Method
+
+```json
+{
+  "serviceName": "example-service",
+  "jobName": "example-job",
+  "jobDescription": "Description of the job",
+  "cronTime": "* * * * * *",
+  "triggerMethod": "KAFKA",
+  "kafkaToic": "example-job-topic",
+  "retry": true,
+  "isOnce": false,
+  "data": {
+    "key1": "value1",
+    "key2": "value2"
+  }
+}
+```
+
+Use this endpoint to define and configure schedules for your jobs, specifying the necessary details and trigger method based on your specific use case.
+
+### Disable Schedule
+
+**DELETE** `/api/schedule/:serviceName/:jobName`
+
+Endpoint for disabling a schedule by service and job name.
+
+## Job Trigger Methods
+
+- **REST**: Schedules jobs triggered by HTTP requests.
+- **KAFKA**: Schedules jobs triggered by Kafka messages.
+
+## Dockerization
+
+You have two options for running the NestJS Scheduler Service with Docker: using the pre-built Docker image from Docker Hub or building your own image.
+
+### Option 1: Using Pre-built Docker Image
+
+You can use the pre-built Docker image available on Docker Hub. Pull the image using the following command:
+
+```bash
+docker pull sanjayarya/scheduler-service:1.0.0
+```
+
+Replace `1.0.0` with the desired version tag.
+
+Now, run the Docker container with the following command:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e DATABASE_TYPE=mysql \
+  -e DATABASE_USER=root \
+  -e DATABASE_PASS=root \
+  -e DATABASE_HOST=localhost \
+  -e DATABASE_NAME=scheduler \
+  -e DATABASE_PORT=3306 \
+  -e KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092 \
+  -e PORT=3000 \
+  sanjayarya/scheduler-service:1.0.0
+```
+
+Make sure to customize the environment variables according to your specific configuration. The -p flag maps port 3000 in the container to port 3000 on your host, but you can adjust the ports as needed.
+
+By setting the environment variables with the -e flag, you ensure that your NestJS Scheduler Service runs with the correct configuration within the Docker container.
+
+### Option 2: Building Your Own Docker Image
+
+To build your own Docker image, use the provided Dockerfile. Build the Docker image using the following command:
+
+```bash
+docker build -t scheduler-service .
+```
+
+Then, run the container:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e DATABASE_TYPE=mysql \
+  -e DATABASE_USER=root \
+  -e DATABASE_PASS=root \
+  -e DATABASE_HOST=localhost \
+  -e DATABASE_NAME=scheduler \
+  -e DATABASE_PORT=3306 \
+  -e KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092 \
+  -e PORT=3000 \
+  scheduler-service
+```
+
+## Helm Charts
+
+If you want to deploy the NestJS Scheduler Service on Kubernetes, you can use Helm charts. Helm charts provide an easy way to package, configure, and deploy applications to Kubernetes clusters. You can find Helm charts for this project in the `helm-charts` directory.
+
+1. Install Helm if you haven't already: [Helm Installation Guide](https://helm.sh/docs/intro/install/)
+
+2. Deploy the application using Helm, providing your own values file (e.g., `values.yaml`) to configure the deployment. Replace `your-values.yaml` with the path to your custom values file:
+
+   ```bash
+   helm install scheduler-service -f your-values.yaml ./helm-charts
+
+   ```
+
+3. To uninstall the application, use:
+   ```bash
+   helm uninstall scheduler-service
+   ```
+
+Make sure to customize the Helm charts and values according to your deployment requirements.
+
+Example values.yaml file (customize as needed):
+
+```yaml
+image:
+  repository: sanjayarya/scheduler-service
+  pullPolicy: Always
+  tag: 1.0.0
+
+config: |-
+# Environment Variables
+  DATABASE_TYPE=mysql
+  DATABASE_USER=
+  DATABASE_PASS=
+  DATABASE_HOST=
+  DATABASE_NAME=
+  DATABASE_PORT=
+
+  MONGODB_URI=
+
+  KAFKA_BROKERS=
+
+  # Port Configuration
+  PORT=3000
+
+# Note: If you change the PORT value, remember to update it in the following places as well:
+# - service/ports/externalPort
+# - service/ports/internalPort
+# - startupProbe/httpGet/port
+# - readinessProbe/httpGet/port
+# - livenessProbe/httpGet/port
+```

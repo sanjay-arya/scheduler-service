@@ -101,5 +101,7 @@ config: |-
   DATABASE_PORT=
 
   MONGODB_URI=
+
   KAFKA_BROKERS=
+
   PORT=3000
