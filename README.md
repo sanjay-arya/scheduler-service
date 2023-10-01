@@ -10,8 +10,12 @@ A scheduler service built with NestJS that allows you to create, update, and dis
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Endpoints](#endpoints)
+  - [Create or Update Schedule](#create-or-update-schedule)
+  - [Disable Schedule](#disable-schedule)
 - [Job Trigger Methods](#job-trigger-methods)
 - [Dockerization](#dockerization)
+  - [Option 1: Using Pre-built Docker Image](#option-1-using-pre-built-docker-image)
+  - [Option 2: Building Your Own Docker Image](#option-2-building-your-own-docker-image)
 - [Helm Charts](#helm-charts)
 
 ## Features
@@ -63,11 +67,7 @@ The service can be configured using environment variables in a `.env` file. Here
 - `DATABASE_TYPE`: Set to `mysql` or `mongodb` based on your choice of database.
 - `KAFKA_BROKERS`: Specify Kafka brokers if you want to enable Kafka trigger method (optional).
 
-## Configuration
-
-The service can be configured using the following environment variables. Create a `.env` file in the project directory and set these variables as needed:
-
-- `DATABASE_TYPE`: Set to `mysql` or `mongo` based on your choice of database.
+### Database Configuration
 
 #### MySQL Configuration (if using MySQL)
 
@@ -89,7 +89,7 @@ The service can be configured using the following environment variables. Create 
 
 - `PORT`: Port on which the NestJS service will run (default is 3000).
 
-Example `.env` file:
+Example `.env` file for MySQL:
 
 ```plaintext
 DATABASE_TYPE=mysql
@@ -101,11 +101,15 @@ DATABASE_NAME=scheduler
 DATABASE_PORT=3306
 ```
 
+Example `.env` file for MongoDB:
+
 ```plaintext
 DATABASE_TYPE=mongodb
 
 MONGODB_URI='mongodb://localhost/scheduler'
 ```
+
+Example `.env` file with Kafka configuration:
 
 ```plaintext
 KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092
