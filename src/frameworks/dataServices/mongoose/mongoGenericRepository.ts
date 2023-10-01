@@ -27,14 +27,7 @@ export class MongoGenericRepository<T> implements IGenericRepository<T> {
     return this._repository.findByIdAndUpdate(id, item, { new: true });
   }
 
-  async exists(item: Partial<T>): Promise<string | number | void> {
-    const record: Record<string, any> = await this._repository
-      .findOne(item)
-      .select({ _id: 1 })
-      .exec();
-
-    if (record._id) {
-      return record._id.toString();
-    }
+  fineOneAndUpdate(item: Partial<T>, newItem: Partial<T>): Promise<T> {
+    return this._repository.findOneAndUpdate(item, newItem, { new: true });
   }
 }

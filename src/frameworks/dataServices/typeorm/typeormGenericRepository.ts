@@ -23,7 +23,15 @@ export class TypeOrmGenericRepository<T> implements IGenericRepository<T> {
     return this._repository.save(item);
   }
 
-  findByIdAndUpdate(id: string | number, item: Partial<T>): Promise<T> {
+  findByIdAndUpdate(id: number | number, item: Partial<T>): Promise<T> {
     return this._repository.save({ ...item, id } as unknown as DeepPartial<T>);
+  }
+
+  async fineOneAndUpdate(item: Partial<T>, newItem: Partial<T>): Promise<T> {
+    const tempItem = await this.findOne(item);
+
+    if (tempItem) {
+      return this.findByIdAndUpdate(tempItem['id'], newItem);
+    }
   }
 }

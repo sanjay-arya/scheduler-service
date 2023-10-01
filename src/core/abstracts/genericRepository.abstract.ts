@@ -8,4 +8,6 @@ export abstract class IGenericRepository<T> {
   abstract create(item: Partial<T>): Promise<T>;
 
   abstract findByIdAndUpdate(id: number | string, item: Partial<T>): Promise<T>;
+
+  abstract fineOneAndUpdate(item: Partial<T>, newItem: Partial<T>): Promise<T>;
 }

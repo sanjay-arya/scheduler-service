@@ -12,10 +12,10 @@ export class SchedulerController {
   }
 
   @Delete(':serviceName/:jobName')
-  delete(
+  disableJob(
     @Param('serviceName') serviceName: string,
     @Param('jobName') jobName: string,
   ) {
-    return this.schedulerService.delete(serviceName, jobName);
+    return this.schedulerService.disableJob(serviceName, jobName);
   }
 }
