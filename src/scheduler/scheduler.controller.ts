@@ -2,7 +2,7 @@ import { Controller, Post, Body, Param, Delete } from '@nestjs/common';
 import { SchedulerService } from './scheduler.service';
 import { CreateSchedulerDto } from './dto/createScheduler.dto';
 
-@Controller('i/schedule')
+@Controller('api/schedule')
 export class SchedulerController {
   constructor(private readonly schedulerService: SchedulerService) {}
 
