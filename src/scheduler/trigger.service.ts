@@ -4,6 +4,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { TriggerMethod } from './enum/triggerMethod.enum';
 import axios from 'axios';
 import { lastValueFrom } from 'rxjs';
+import { Schedule } from 'src/core/entities/schedule.entity';
 
 export class TriggerMethodNotFound extends Error {}
 
@@ -11,37 +12,45 @@ export class TriggerMethodNotFound extends Error {}
 export class TriggerService {
   private readonly logger = new Logger(TriggerService.name);
 
+  private triggerMethods: Record<
+    string,
+    (schedule: Schedule) => Promise<void>
+  > = {
+    [TriggerMethod.REST]: this.triggerREST,
+  };
+
   constructor(
     @Optional() @Inject('KAFKA_SERVICE') private clientKafka: ClientKafka,
   ) {
-    this.clientKafka?.connect();
+    if (this.clientKafka) {
+      this.clientKafka.connect();
+      this.triggerMethods[TriggerMethod.KAFKA] = this.triggerKafka.bind(this);
+    }
   }
 
-  async trigger({
-    triggerMethod,
-    webhookUrl,
-    kafkaTopic,
-    data,
-  }: {
-    triggerMethod: string;
-    webhookUrl: string;
-    kafkaTopic: string;
-    data: Record<string, any>;
-  }) {
-    console.log(triggerMethod, webhookUrl, kafkaTopic);
-    switch (triggerMethod) {
-      case TriggerMethod.REST:
-        await axios.post(webhookUrl, data);
-        break;
-      case TriggerMethod.KAFKA:
-        if (this.clientKafka) {
-          await lastValueFrom(this.clientKafka.emit(kafkaTopic, { ...data }));
-          break;
-        }
-      default:
-        throw new TriggerMethodNotFound(
-          `Trigger method ${triggerMethod} not found`,
-        );
+  isValidTrigger(schedule: Schedule): boolean {
+    return !!this.triggerMethods[schedule.triggerMethod];
+  }
+
+  async trigger(schedule: Schedule) {
+    const currentTrigger = this.triggerMethods[schedule.triggerMethod];
+
+    if (currentTrigger) {
+      await currentTrigger(schedule);
+    } else {
+      throw new TriggerMethodNotFound(
+        `Trigger method ${schedule.triggerMethod} not found`,
+      );
     }
+  }
+
+  private async triggerREST(schedule: Schedule) {
+    await axios.post(schedule.webhookUrl, { ...schedule?.data });
+  }
+
+  private async triggerKafka(schedule: Schedule) {
+    await lastValueFrom(
+      this.clientKafka.emit(schedule.kafkaTopic, { ...schedule?.data }),
+    );
   }
 }

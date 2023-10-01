@@ -1,11 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
-import { TriggerMethod } from './enum/triggerMethod.enum';
-import axios from 'axios';
 import { CreateSchedulerDto } from './dto/createScheduler.dto';
-import { lastValueFrom } from 'rxjs';
-import { error } from 'console';
 import { IDataServices } from 'src/core/abstracts/dataServices.abstract';
 import { Schedule } from 'src/core/entities/schedule.entity';
 import { TriggerMethodNotFound, TriggerService } from './trigger.service';
@@ -47,20 +43,17 @@ export class SchedulerService implements OnApplicationBootstrap {
     return job;
   }
 
-  async delete(serviceName: string, jobName: string) {
-    let job = await this.dataService.schedules.findOne({
-      serviceName,
-      jobName,
-      isActive: true,
-    });
+  async disableJob(serviceName: string, jobName: string) {
+    const job = await this.dataService.schedules.fineOneAndUpdate(
+      { serviceName, jobName, isActive: true },
+      { isActive: false },
+    );
 
     if (job) {
-      job = await this.dataService.schedules.findByIdAndUpdate(job.id, {
-        isActive: false,
-      });
-
-      await this.unScheduleJob(`${job.serviceName}-${job.jobName}`);
+      this.unScheduleJob(`${serviceName}-${jobName}`);
     }
+
+    return job;
   }
 
   async initScheduleJobs() {
@@ -84,7 +77,7 @@ export class SchedulerService implements OnApplicationBootstrap {
     job.start();
 
     this.logger.log(
-      `Job ${serviceJobName} added with cronTime ${schedule.cronTime}!`,
+      `Job ${serviceJobName} added with cronTime ${schedule.cronTime}`,
     );
   }
 
@@ -98,12 +91,12 @@ export class SchedulerService implements OnApplicationBootstrap {
     await this.scheduleJob(schedule);
   }
 
-  async unScheduleJob(serviceJobName: string) {
+  unScheduleJob(serviceJobName: string) {
     try {
       this.schedulerRegistry.deleteCronJob(serviceJobName);
-      this.logger.log(`Job ${serviceJobName} is deleted!`);
+      this.logger.log(`Job ${serviceJobName} is unScheduled!`);
     } catch (error) {
-      this.logger.error(`Job ${serviceJobName} not found for deletion`);
+      this.logger.error(`Job ${serviceJobName} not found for unScheduling`);
       this.logger.error(error);
     }
   }
@@ -117,6 +110,11 @@ export class SchedulerService implements OnApplicationBootstrap {
       return;
     }
 
+    if (!this.triggerService.isValidTrigger(schedule)) {
+      await this.inValidTriggerMethod(schedule);
+      return;
+    }
+
     this.logger.log(
       `Running Job ${serviceJobName}, trigger method ${schedule.triggerMethod}`,
     );
@@ -126,39 +124,46 @@ export class SchedulerService implements OnApplicationBootstrap {
 
       this.logger.log(`Job ${serviceJobName} completed successfully`);
 
-      if (schedule.isOnce) {
-        schedule.isActive = false;
-        await this.dataService.schedules.findByIdAndUpdate(
-          schedule.id,
-          schedule,
-        );
-
-        this.logger.log(`Job ${serviceJobName} is a one time job.`);
-        this.unScheduleJob(serviceJobName);
-      }
+      schedule.isError = false;
     } catch (error) {
       this.logger.error(`Job ${serviceJobName} fail, encounter error`);
       this.logger.error(error);
 
-      schedule.isError = true;
-
       if (error instanceof TriggerMethodNotFound) {
-        this.logger.log(
-          `Job ${serviceJobName} will be disabled since trigger method not found`,
-        );
-        schedule.isActive = false;
-
-        this.unScheduleJob(serviceJobName);
-      } else if (schedule.isOnce && !schedule.retry) {
-        this.logger.log(
-          `Job ${serviceJobName} is a one time job with no retry`,
-        );
-        schedule.isActive = false;
-
-        this.unScheduleJob(serviceJobName);
+        await this.inValidTriggerMethod(schedule);
+        return;
       }
 
-      await this.dataService.schedules.findByIdAndUpdate(schedule.id, schedule);
+      schedule.isError = true;
+
+      if (schedule.retry) {
+        this.logger.log(
+          `Job ${serviceJobName} has enabled retry, so we will retry this job`,
+        );
+        // Coming Soon
+      }
     }
+
+    if (schedule.isOnce && (schedule.isError ? !schedule.retry : true)) {
+      this.logger.log(`Job ${serviceJobName} is a one time job with no retry`);
+      schedule.isActive = false;
+
+      this.unScheduleJob(serviceJobName);
+    }
+
+    await this.dataService.schedules.findByIdAndUpdate(schedule.id, schedule);
+  }
+
+  private async inValidTriggerMethod(schedule: Schedule) {
+    const serviceJobName = `${schedule.serviceName}-${schedule.jobName}`;
+
+    this.logger.error(`Job ${serviceJobName}, Invalid Trigger Method`);
+
+    this.unScheduleJob(serviceJobName);
+
+    await this.dataService.schedules.findByIdAndUpdate(schedule.id, {
+      isError: true,
+      isActive: false,
+    });
   }
 }
