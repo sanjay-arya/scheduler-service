@@ -17,7 +17,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "npx typeorm -d dist/config/typeorm.config.js",
+    "migration:generate": "npm run typeorm -- migration:generate ./src/frameworks/dataServices/typeorm/migrations/$npm_package_name",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -29,13 +34,16 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^3.0.4",
     "@nestjs/terminus": "^10.1.1",
+    "@nestjs/typeorm": "^10.0.0",
     "axios": "^1.5.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "kafkajs": "^2.2.4",
     "mongoose": "^7.5.3",
+    "mysql2": "^3.6.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

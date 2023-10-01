@@ -6,9 +6,15 @@ import { ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { Partitioners } from 'kafkajs';
 import { MongoDataServiceModule } from 'src/frameworks/dataServices/mongoose/mongoDataService.module';
+import { TypeOrmDataServiceModule } from 'src/frameworks/dataServices/typeorm/typeormDataService.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), MongoDataServiceModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    process.env.DATABASE_TYPE === 'mysql'
+      ? TypeOrmDataServiceModule
+      : MongoDataServiceModule,
+  ],
   controllers: [SchedulerController],
   providers: [
     SchedulerService,
