@@ -41,6 +41,15 @@ export class Schedule extends ScheduleEntity {
   @Prop({ default: false })
   retry: boolean;
 
+  @Prop({ required: false })
+  retryBaseDelay: number;
+
+  @Prop({ required: false })
+  retryCount: number;
+
+  @Prop({ default: 0 })
+  currentRetry: number;
+
   @Prop({ default: false })
   isOnce: boolean;
 

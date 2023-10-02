@@ -9,4 +9,6 @@ export const config = () => ({
       : [],
     consumerGroupId: process.env.KAFKA_CONSUMER_GROUP_ID,
   },
+  retryBaseDelay: Number(process.env.RETRY_BASE_DELAY || 30),
+  retryCount: Number(process.env.RETRY_COUNT || 6),
 });
