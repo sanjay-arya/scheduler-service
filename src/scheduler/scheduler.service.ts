@@ -268,7 +268,6 @@ export class SchedulerService implements OnApplicationBootstrap {
   }
 
   getRetryInterval(count: number, baseDelay?: number) {
-    console.log(count, baseDelay, baseDelay ?? this.retryBaseDelay);
     return (baseDelay ?? this.retryBaseDelay) * 2 ** count;
   }
 }
