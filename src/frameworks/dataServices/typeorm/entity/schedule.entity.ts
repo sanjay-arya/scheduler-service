@@ -39,6 +39,15 @@ export class ScheduleEntity extends Schedule {
   @Column({ default: false })
   retry: boolean;
 
+  @Column({ nullable: true })
+  retryBaseDelay: number;
+
+  @Column({ nullable: true })
+  retryCount: number;
+
+  @Column({ default: 0 })
+  currentRetry: number;
+
   @Column({ default: false })
   isOnce: boolean;
 

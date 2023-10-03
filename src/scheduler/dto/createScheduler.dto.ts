@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -45,6 +46,16 @@ export class CreateSchedulerDto {
   @IsBoolean()
   @IsOptional()
   retry: boolean;
+
+  @ValidateIf((item) => item.triggerMethod === TriggerMethod.REST)
+  @IsNumber()
+  @IsOptional()
+  retryBaseDelay: number;
+
+  @ValidateIf((item) => item.triggerMethod === TriggerMethod.REST)
+  @IsNumber()
+  @IsOptional()
+  retryCount: number;
 
   @IsBoolean()
   @IsOptional()

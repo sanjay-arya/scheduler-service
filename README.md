@@ -66,6 +66,8 @@ The service can be configured using environment variables in a `.env` file. Here
 
 - `DATABASE_TYPE`: Set to `mysql` or `mongodb` based on your choice of database.
 - `KAFKA_BROKERS`: Specify Kafka brokers if you want to enable Kafka trigger method (optional).
+- `RETRY_BASE_DELAY`: The base delay (in seconds) for retrying failed jobs (default is 30 seconds).
+- `RETRY_COUNT`: The maximum number of retry attempts for failed jobs (default is 6).
 
 ### Database Configuration
 
@@ -113,6 +115,10 @@ Example `.env` file with Kafka configuration:
 
 ```plaintext
 KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092
+
+RETRY_BASE_DELAY=30
+RETRY_COUNT=6
+
 PORT=3000
 ```
 
@@ -145,6 +151,8 @@ To create or update schedules, you can make a **POST** request to `/api/schedule
 - `cronTime`: A string specifying the cron expression for when the job should run.
 - `triggerMethod`: A string indicating the trigger method for the job. It can be either `"REST"` or `"KAFKA"`.
 - `retry` (optional): A boolean indicating whether to keep retrying the job if something goes wrong during execution.
+- `retryBaseDelay` (optional): The base delay (in seconds) for retrying failed jobs. The retry mechanism uses exponential backoff, with the initial retry attempt occurring after retryBaseDelay seconds and subsequent retries doubling the delay.
+- `retryCount`: (optional): The maximum number of retry attempts for failed jobs.
 - `isOnce` (optional): A boolean indicating if the job is a one-time job that will be disabled after a successful execution.
 - `data` (optional): Additional data that will be sent as the POST request body.
 
@@ -172,6 +180,8 @@ Customize the payload based on your requirements and the chosen trigger method.
   "triggerMethod": "REST",
   "webhookUrl": "https://example.com/webhook",
   "retry": true,
+  "retryBaseDelay": 30,
+  "retryCount": 6,
   "isOnce": false,
   "data": {
     "key1": "value1",
@@ -191,6 +201,8 @@ Customize the payload based on your requirements and the chosen trigger method.
   "triggerMethod": "KAFKA",
   "kafkaToic": "example-job-topic",
   "retry": true,
+  "retryBaseDelay": 30,
+  "retryCount": 6,
   "isOnce": false,
   "data": {
     "key1": "value1",
@@ -211,6 +223,15 @@ Endpoint for disabling a schedule by service and job name.
 
 - **REST**: Schedules jobs triggered by HTTP requests.
 - **KAFKA**: Schedules jobs triggered by Kafka messages.
+
+## Retry Mechanism:
+
+- When a job with retry enabled fails during execution, the scheduler service will automatically schedule a retry attempt.
+- The retry mechanism follows exponential backoff, where each retry attempt increases the delay exponentially. The delay between retries is calculated based on the formula: `retryBaseDelay * Math.pow(2, currentRetryCount)`, where `retryBaseDelay` is the base delay specified in seconds, and `currentRetryCount` is the current retry attempt.
+- If a normal job is scheduled to run before the next retry attempt (e.g., a job with a shorter `cronTime`), and it successfully completes, the retry attempt is canceled.
+- However, if the normal job fails, the current retry attempt is skipped, and the next retry attempt with its appropriate delay is scheduled.
+- The maximum number of retry attempts is determined by the `retryCount` value. If the maximum number of retries is reached and the job still fails, it will be marked as unsuccessful.
+- You can customize the `retryBaseDelay` and `retryCount` values to fine-tune the retry behavior according to your needs.
 
 ## Dockerization
 
@@ -237,6 +258,8 @@ docker run -d -p 3000:3000 \
   -e DATABASE_NAME=scheduler \
   -e DATABASE_PORT=3306 \
   -e KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092 \
+  -e RETRY_BASE_DELAY=30 \
+  -e RETRY_COUNT=6 \
   -e PORT=3000 \
   sanjayarya/scheduler-service:1.0.0
 ```
@@ -264,6 +287,8 @@ docker run -d -p 3000:3000 \
   -e DATABASE_NAME=scheduler \
   -e DATABASE_PORT=3306 \
   -e KAFKA_BROKERS=1.1.1.1:9092,2.2.2.2:9092 \
+  -e RETRY_BASE_DELAY=30 \
+  -e RETRY_COUNT=6 \
   -e PORT=3000 \
   scheduler-service
 ```
@@ -308,6 +333,10 @@ config: |-
   MONGODB_URI=
 
   KAFKA_BROKERS=
+
+  # Retry Configuration
+  RETRY_BASE_DELAY=30
+  RETRY_COUNT=6
 
   # Port Configuration
   PORT=3000

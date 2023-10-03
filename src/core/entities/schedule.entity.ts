@@ -19,6 +19,12 @@ export class Schedule {
 
   retry: boolean;
 
+  retryBaseDelay: number;
+
+  retryCount: number;
+
+  currentRetry: number;
+
   isOnce: boolean;
 
   isError: boolean;

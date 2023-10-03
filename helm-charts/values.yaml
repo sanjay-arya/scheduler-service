@@ -104,4 +104,7 @@ config: |-
 
   KAFKA_BROKERS=
 
+  RETRY_BASE_DELAY=
+  RETRY_COUNT=
+
   PORT=3000
