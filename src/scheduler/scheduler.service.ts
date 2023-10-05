@@ -57,7 +57,9 @@ export class SchedulerService implements OnApplicationBootstrap {
     );
 
     if (job) {
-      this.unScheduleJob(`${serviceName}-${jobName}`);
+      const serviceJobName = `${serviceName}-${jobName}`;
+      this.unScheduleJob(serviceJobName);
+      this.unScheduleRetryJob(serviceJobName);
     }
 
     return job;
